@@ -171,16 +171,14 @@ func NewDriver(hostName, storePath string) drivers.Driver {
 	d := &Driver{
 		DockerPort:            defaultDockerPort,
 		DockerSwarmMasterPort: defaultSwarmMasterPort,
-		/*
-			Location:              defaultLocation,
-			Template:              defaultTemplate,
-			CPU:                   defaultCPU,
-			MemoryGB:              defaultMemoryGB,
-			ServerType:            defaultServerType,
-			GroupName:             defaultGroupName,
-			NameTemplate:          defaultNameTemplate,
-			Description:           defaultDescription,
-		*/
+		Location:              defaultLocation,
+		Template:              defaultTemplate,
+		CPU:                   defaultCPU,
+		MemoryGB:              defaultMemoryGB,
+		ServerType:            defaultServerType,
+		GroupName:             defaultGroupName,
+		NameTemplate:          defaultNameTemplate,
+		Description:           defaultDescription,
 		BaseDriver: &drivers.BaseDriver{
 			SSHPort:     defaultSSHPort,
 			SSHUser:     defaultSSHUser,
@@ -297,7 +295,6 @@ func (d *Driver) Create() error {
 		return fmt.Errorf("Failed resolving group %v", d.GroupName)
 	}
 	log.Debugf("Spawning server into group: %v", gid)
-
 	spec := server.Server{
 		Name:           d.NameTemplate,
 		Password:       d.SSHPassword,
@@ -308,16 +305,10 @@ func (d *Driver) Create() error {
 		SourceServerID: d.Template,
 		Type:           d.ServerType,
 	}
-
-	if false {
-		//spec.Additionaldisks = disks
-	}
-	if false {
-		//spec.Customfields = fields
-	}
+	//spec.Additionaldisks = disks
+	//spec.Customfields = fields
 
 	log.Debugf("Spawning server with: %v", spec)
-
 	resp, err := d.client().Server.Create(spec)
 	if err != nil {
 		return fmt.Errorf("Error creating server: %v", err)
@@ -334,7 +325,6 @@ func (d *Driver) Create() error {
 
 	_, uuid := resp.Links.GetID("self")
 	s, err := d.client().Server.Get(uuid)
-
 	d.ServerID = s.ID
 	log.Infof("Created server: %v", d.ServerID)
 
@@ -411,7 +401,9 @@ func (d *Driver) Create() error {
 func (d *Driver) GetState() (state.State, error) {
 	s, err := d.client().Server.Get(d.ServerID)
 	if err != nil {
-		return state.Error, fmt.Errorf("Failed fetching server %v - %v", d.ServerID, err)
+		log.Infof("Failed fetching server %v. (is it dead?) error: %v", d.ServerID, err)
+		return state.None, nil
+		//return state.Error, fmt.Errorf("Failed fetching server %v - %v", d.ServerID, err)
 	}
 	log.Debugf("server.status: %v powerstate: %v", s.Status, s.Details.Powerstate)
 	if s.Status == "underConstruction" {
@@ -437,7 +429,13 @@ func (d *Driver) PreCreateCheck() error {
 
 // Remove a host
 func (d *Driver) Remove() error {
-	return nil
+	st, err := d.GetState()
+	if st == state.None {
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("Failed fetching state: %v", err)
+	}
+	return d.Kill()
 }
 
 // Start a host
@@ -495,6 +493,8 @@ func (d *Driver) Kill() error {
 		_, st = resp.GetStatusID()
 	}
 	if err == nil && st != "" {
+		// TODO: do we need to make the client wait? maybe skip status polling?
+		log.Debugf("Server queued for deletion. Polling status %v", st)
 		err = waitStatus(d.client(), st)
 	}
 	if err != nil {
@@ -561,9 +561,16 @@ func deepGroups(g group.Groups, m *map[string]string) {
 }
 
 func generatePassword(strlen int) string {
+	/* FIXME: ensure password conforms
+	   A password must be at least 8 characters and contain at least 3 of the following:
+	   uppercase letters
+	   lowercase letters
+	   numbers
+	   symbols
+	*/
 	// adapted from http://siongui.github.io/2015/04/13/go-generate-random-string/
 	rand.Seed(time.Now().UTC().UnixNano())
-	const chars = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&()_+"
+	const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIFJKLMNOPQRSTUVWXYZ0123456789!@#$^&()_+"
 	result := make([]byte, strlen)
 	for i := 0; i < strlen; i++ {
 		result[i] = chars[rand.Intn(len(chars))]

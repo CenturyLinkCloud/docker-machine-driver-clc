@@ -1,10 +1,11 @@
 
 # Docker Machine driver for CenturyLinkCloud
 
+creates docker instances on CLC.
+
 ```bash
 docker-machine create -d clc machine0
 ```
-
 
 
 ## Installation
@@ -13,12 +14,16 @@ The easiest way to install ovh docker-machine driver is to:
 
 ```bash
 go install github.com/CenturyLinkCloud/docker-machine-driver-clc
+
+which docker-machine-driver-clc
 ```
+
+binaries also available under [releases tab](releases)
+
 
 ## Example Usage
 
-inspect available options via --help
-
+Sign up at https://www.ctl.io and export your credentials into your shell environment or pass as cmdline flags
 
 ```bash
 export CLC_USERNAME='<username>'
@@ -26,7 +31,7 @@ export CLC_PASSWORD='<password>'
 export CLC_ALIAS='<alias>'
 
 token=$(docker run swarm create)
-docker-machine create -d clc --clc-server-group "my docker swarm" --swarm --swarm-discovery --swarm-token token://$token master
+docker-machine create -d clc --clc-server-group "dockerswarm" --swarm --swarm-discovery --swarm-token token://$token master
 docker $(docker-machine config --swarm master) info
 ```
 
@@ -57,9 +62,9 @@ Each environment variable may be overloaded by its option equivalent at runtime.
 
 ## Kernels
 
-The default ubuntu image runs kernel 3.13.xx but advanced swarm/networking features require a newer kernel
+The default ubuntu image runs kernel 3.13.xx but advanced swarm/networking features require a newer kernel.
 
-Optionally `Docker-machine ssh` in and `apt-get install -qy linux-image-generic-lts-wily && reboot`
+Optionally, `docker-machine ssh` in and `apt-get install -qy linux-image-generic-lts-wily && reboot`
 
 ## Hacking
 

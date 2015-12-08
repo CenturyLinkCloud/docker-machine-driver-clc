@@ -6,6 +6,7 @@ OS="darwin linux windows"
 ARCH="amd64"
 
 echo "Getting build dependencies"
+go get . 
 go get -u github.com/golang/lint/golint
 
 echo "Ensuring code quality"
@@ -18,7 +19,7 @@ echo "VERSION docker-machine '$dmver'"
 for GOOS in $OS; do
     for GOARCH in $ARCH; do
         arch="$GOOS-$GOARCH"
-        binary="bin/docker-machine-driver-clc-$arch"
+        binary="bin/docker-machine-driver-clc.$arch"
         echo "Building $binary"
         GOOS=$GOOS GOARCH=$GOARCH go build -o $binary
     done
