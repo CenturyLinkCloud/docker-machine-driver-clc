@@ -43,19 +43,19 @@ docker-machine create -d clc --help
 ```
 
 
-| Option Name                                          | Description                                     | Default Value         | required |
-|------------------------------------------------------|-------------------------------------------------|-----------------------+----------|
-| ``--clc-account-username`` or ``$CLC_USERNAME``      | CLC account user                                | none                  | yes      |
-| ``--clc-account-password`` or ``$CLC_PASSWORD``      | CLC account password                            | none                  | yes      |
-| ``--clc-account-alias`` or ``$CLC_ALIAS``            | CLC account alias                               | none                  | yes      |
-| ``--clc-server-private`` or ``CLC_SERVER_PRIVATE``   | allocates public ip (if disabled, VPN required) | false                 | no       |
-| ``--clc-server-group`` or ``$CLC_SERVER_GROUP``      | server group (name or id) to spawn into         | Default Group         | no       |
-| ``--clc-server-location`` or ``CLC_SERVER_LOCATION`` | datacenter                                      | WA1                   | no       |
-| ``--clc-server-cpu`` or ``CLC_SERVER_CPU``           | cpu cores                                       | 2                     | no       |
-| ``--clc-server-mem`` or ``CLC_SERVER_MEM``           | memory GB                                       | 2                     | no       |
-| ``--clc-server-template`` or ``CLC_SERVER_TEMPLATE`` | OS image                                        | ubuntu-14-64-template | no       |
-| ``--clc-ssh-user`` or ``CLC_SSH_USER``               | ssh user (specific to OS image)                 | root                  | no       |
-| ``--clc-ssh-password`` or ``CLC_SSH_PASSWORD``       | ssh password                                    | <generated>           | no       |
+ Option Name                                          | Description                                     | Default Value         | required 
+------------------------------------------------------|-------------------------------------------------|-----------------------|----------
+ ``--clc-account-username`` or ``$CLC_USERNAME``      | CLC account user                                | none                  | yes      
+ ``--clc-account-password`` or ``$CLC_PASSWORD``      | CLC account password                            | none                  | yes      
+ ``--clc-account-alias`` or ``$CLC_ALIAS``            | CLC account alias                               | none                  | yes      
+ ``--clc-server-private`` or ``CLC_SERVER_PRIVATE``   | allocates public ip (if disabled, VPN required) | false                 | no       
+ ``--clc-server-group`` or ``$CLC_SERVER_GROUP``      | server group (name or id) to spawn into         | Default Group         | no       
+ ``--clc-server-location`` or ``CLC_SERVER_LOCATION`` | datacenter                                      | WA1                   | no       
+ ``--clc-server-cpu`` or ``CLC_SERVER_CPU``           | cpu cores                                       | 2                     | no       
+ ``--clc-server-mem`` or ``CLC_SERVER_MEM``           | memory GB                                       | 2                     | no       
+ ``--clc-server-template`` or ``CLC_SERVER_TEMPLATE`` | OS image                                        | ubuntu-14-64-template | no       
+ ``--clc-ssh-user`` or ``CLC_SSH_USER``               | ssh user (specific to OS image)                 | root                  | no       
+ ``--clc-ssh-password`` or ``CLC_SSH_PASSWORD``       | ssh password                                    | <generated>           | no       
 
 
 Each environment variable may be overloaded by its option equivalent at runtime.
