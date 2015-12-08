@@ -409,6 +409,9 @@ func (d *Driver) GetState() (state.State, error) {
 	if s.Status == "underConstruction" {
 		return state.Starting, nil
 	}
+	if s.Status == "queuedForDelete" {
+		return state.Stopped, nil
+	}
 
 	switch s.Details.Powerstate {
 	case "started":
@@ -440,14 +443,7 @@ func (d *Driver) Remove() error {
 
 // Start a host
 func (d *Driver) Start() error {
-	resp, err := d.client().Server.PowerState(server.On, d.ServerID)
-	st := ""
-	if err == nil {
-		_, st = resp[0].GetStatusID()
-	}
-	if err == nil && st != "" {
-		err = waitStatus(d.client(), st)
-	}
+	_, err := d.client().Server.PowerState(server.On, d.ServerID)
 	if err != nil {
 		return fmt.Errorf("Failed starting server: %v - %v", d.ServerID, err)
 	}
@@ -456,14 +452,7 @@ func (d *Driver) Start() error {
 
 // Stop a host gracefully
 func (d *Driver) Stop() error {
-	resp, err := d.client().Server.PowerState(server.Off, d.ServerID)
-	st := ""
-	if err == nil {
-		_, st = resp[0].GetStatusID()
-	}
-	if err == nil && st != "" {
-		err = waitStatus(d.client(), st)
-	}
+	_, err := d.client().Server.PowerState(server.Off, d.ServerID)
 	if err != nil {
 		return fmt.Errorf("Failed stopping server: %v - %v", d.ServerID, err)
 	}
@@ -487,16 +476,7 @@ func (d *Driver) Restart() error {
 
 // Kill stops a host forcefully
 func (d *Driver) Kill() error {
-	resp, err := d.client().Server.Delete(d.ServerID)
-	st := ""
-	if err == nil {
-		_, st = resp.GetStatusID()
-	}
-	if err == nil && st != "" {
-		// TODO: do we need to make the client wait? maybe skip status polling?
-		log.Debugf("Server queued for deletion. Polling status %v", st)
-		err = waitStatus(d.client(), st)
-	}
+	_, err := d.client().Server.Delete(d.ServerID)
 	if err != nil {
 		return fmt.Errorf("Failed killing server: %v - %v", d.ServerID, err)
 	}
@@ -570,7 +550,7 @@ func generatePassword(strlen int) string {
 	*/
 	// adapted from http://siongui.github.io/2015/04/13/go-generate-random-string/
 	rand.Seed(time.Now().UTC().UnixNano())
-	const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIFJKLMNOPQRSTUVWXYZ0123456789!@#$^&()_+"
+	const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIFJKLMNOPQRSTUVWXYZ0123456789!@#$*&()_"
 	result := make([]byte, strlen)
 	for i := 0; i < strlen; i++ {
 		result[i] = chars[rand.Intn(len(chars))]
