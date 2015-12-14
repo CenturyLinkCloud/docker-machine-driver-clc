@@ -10,15 +10,15 @@ docker-machine create -d clc machine0
 
 ## Installation
 
-The easiest way to install ovh docker-machine driver is to:
+The easiest way to install the clc docker-machine driver is to:
 
-```bash
+```
 go install github.com/CenturyLinkCloud/docker-machine-driver-clc
 
-which docker-machine-driver-clc
+`which docker-machine-driver-clc`
 ```
 
-binaries also available under [releases tab](releases)
+binaries also available under [releases tab](https://github.com/CenturyLinkCloud/docker-machine-driver-clc/releases)
 
 
 ## Example Usage
