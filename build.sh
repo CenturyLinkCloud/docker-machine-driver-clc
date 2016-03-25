@@ -6,11 +6,11 @@ OS="darwin linux windows"
 ARCH="amd64"
 
 echo "Getting build dependencies"
-go get . 
+godep get . 
 go get -u github.com/golang/lint/golint
 
 echo "Ensuring code quality"
-go vet ./...
+godep go vet ./...
 golint ./...
 
 dmver=$(cd $GOPATH/src/github.com/docker/machine && git describe --abbrev=0 --tags)
@@ -21,6 +21,6 @@ for GOOS in $OS; do
         arch="$GOOS-$GOARCH"
         binary="bin/docker-machine-driver-clc.$arch"
         echo "Building $binary"
-        GOOS=$GOOS GOARCH=$GOARCH go build -o $binary
+        GOOS=$GOOS GOARCH=$GOARCH godep go build -o $binary
     done
 done
