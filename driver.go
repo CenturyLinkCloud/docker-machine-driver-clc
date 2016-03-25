@@ -194,7 +194,7 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	d.Username = flags.String("clc-account-username")
 	d.Password = flags.String("clc-account-password")
 	d.Alias = flags.String("clc-account-alias")
-	if d.Username == "" || d.Password == "" || d.Alias == "" {
+	if d.Username == "" || d.Password == "" {
 		return fmt.Errorf("Missing CLC Account credentials (see help)")
 	}
 
@@ -235,7 +235,11 @@ var apiClient *sdk.Client
 
 func (d *Driver) client() *sdk.Client {
 	if apiClient == nil {
-		config := api.NewConfig(d.Username, d.Password, d.Alias)
+		config, _ := api.NewConfig(d.Username, d.Password)
+		config.UserAgent = "docker-machine-driver"
+		if d.Alias != "" {
+			config.Alias = d.Alias
+		}
 		apiClient = sdk.New(config)
 		err := apiClient.Authenticate()
 		if err != nil {
