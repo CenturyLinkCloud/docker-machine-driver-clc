@@ -44,6 +44,8 @@ type Driver struct {
 	Description           string
 	Public                bool   // allocate public IP for docker ports
 	PublicIP              string // calculated public IP
+	AnityAffinityPolicy   string
+	ConfigurationId       string
 }
 
 const (
@@ -163,6 +165,16 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Name:   "clc-server-private",
 			Usage:  "disable public IP (default:publicly accessible)",
 		},
+		mcnflag.StringFlag{
+			EnvVar: "CLC_AA_POLICY",
+			Name:   "clc-aa-policy",
+			Usage:  "anti affinity policy name",
+		},
+		mcnflag.StringFlag{
+			EnvVar: "CLC_CONFIGURATION_ID",
+			Name:   "clc-configuration-id",
+			Usage:  "baremetal configuration id",
+		},
 	}
 }
 
@@ -217,17 +229,32 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	//d.SwarmMaster = flags.Bool("swarm-master")
 	//d.SwarmHost = flags.String("swarm-host")
 	//d.SwarmDiscovery = flags.String("swarm-discovery")
+	d.SetSwarmConfigFromFlags(flags)
 
 	d.Location = flags.String("clc-server-location")
 	d.Template = flags.String("clc-server-template")
 	d.CPU = flags.Int("clc-server-cpu")
 	d.MemoryGB = flags.Int("clc-server-mem")
-	d.ServerType = flags.String("clc-server-type")
 	d.GroupName = flags.String("clc-server-group")
 	d.NameTemplate = flags.String("clc-server-name")
 	d.Description = flags.String("clc-server-desc")
 	d.Public = flags.Bool("clc-server-private") == false
 	log.Warnf("public: %v", d.Public)
+
+	d.ServerType = flags.String("clc-server-type")
+	d.AnityAffinityPolicy = flags.String("clc-aa-policy")
+	d.ConfigurationId = flags.String("clc-configuration-id")
+
+	if d.AnityAffinityPolicy != "" && d.ServerType != "hyperscale" {
+		log.Warnf("Anti affinity policy specified but the server type isn't 'hyperscale'")
+	}
+	if d.ConfigurationId == "" && d.ServerType == "baremetal" {
+		return fmt.Errorf("Missing configuration id for baremetal server.")
+	}
+	if d.ConfigurationId != "" && d.ServerType != "baremetal" {
+		log.Warnf("Configuration id specified but the server type isn't 'baremetal'")
+	}
+
 	return nil
 }
 
