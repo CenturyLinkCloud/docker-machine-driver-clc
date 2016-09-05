@@ -56,8 +56,8 @@ docker-machine create -d clc --help
  ``--clc-server-template`` or ``CLC_SERVER_TEMPLATE`` | OS image                                        | ubuntu-14-64-template | no       
  ``--clc-ssh-user`` or ``CLC_SSH_USER``               | ssh user (specific to OS image)                 | root                  | no       
  ``--clc-ssh-password`` or ``CLC_SSH_PASSWORD``       | ssh password                                    | <generated>           | no 
- ``--clc-server-type`` or ``CLC_SERVER_TYPE``         | Server type (standard,hyperscale,baremetal)     | standard              | no
- ``--clc-aa-policy`` or ``CLC_AA_POLICY``             | Antity affinity policy name                     | none                  | no (unless server type = hyperscale)      
+ ``--clc-server-type`` or ``CLC_SERVER_TYPE``         | Server type (standard,hyperscale)               | standard              | no
+ ``--clc-aa-policy`` or ``CLC_AA_POLICY``             | Anti affinity policy name                       | none                  | no (unless server type = hyperscale)      
 
 
 Each environment variable may be overloaded by its option equivalent at runtime.
