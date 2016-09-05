@@ -44,8 +44,7 @@ type Driver struct {
 	Description           string
 	Public                bool   // allocate public IP for docker ports
 	PublicIP              string // calculated public IP
-	AnityAffinityPolicy   string
-	ConfigurationId       string
+	AntiAffinityPolicy    string
 }
 
 const (
@@ -139,7 +138,7 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 		mcnflag.StringFlag{
 			EnvVar: "CLC_SERVER_TYPE",
 			Name:   "clc-server-type",
-			Usage:  "server type (default:standard)",
+			Usage:  "server type (default:standard) allowed: standard, hyperscale",
 			Value:  defaultServerType,
 		},
 		mcnflag.StringFlag{
@@ -169,11 +168,6 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			EnvVar: "CLC_AA_POLICY",
 			Name:   "clc-aa-policy",
 			Usage:  "anti affinity policy name",
-		},
-		mcnflag.StringFlag{
-			EnvVar: "CLC_CONFIGURATION_ID",
-			Name:   "clc-configuration-id",
-			Usage:  "baremetal configuration id",
 		},
 	}
 }
@@ -242,18 +236,7 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	log.Warnf("public: %v", d.Public)
 
 	d.ServerType = flags.String("clc-server-type")
-	d.AnityAffinityPolicy = flags.String("clc-aa-policy")
-	d.ConfigurationId = flags.String("clc-configuration-id")
-
-	if d.AnityAffinityPolicy != "" && d.ServerType != "hyperscale" {
-		log.Warnf("Anti affinity policy specified but the server type isn't 'hyperscale'")
-	}
-	if d.ConfigurationId == "" && d.ServerType == "baremetal" {
-		return fmt.Errorf("Missing configuration id for baremetal server.")
-	}
-	if d.ConfigurationId != "" && d.ServerType != "baremetal" {
-		log.Warnf("Configuration id specified but the server type isn't 'baremetal'")
-	}
+	d.AntiAffinityPolicy = flags.String("clc-aa-policy")
 
 	return nil
 }
@@ -338,6 +321,13 @@ func (d *Driver) Create() error {
 	}
 	//spec.Additionaldisks = disks
 	//spec.Customfields = fields
+	if d.AntiAffinityPolicy != "" {
+		policyID, err := getAntiAffinityPolicyID(d.AntiAffinityPolicy)
+		if err != nil {
+			return fmt.Errorf("Error querying anti-affinity policies: %v", err)
+		}
+		spec.AntiAffinityPolicyID = policyID
+	}
 
 	log.Debugf("Spawning server with: %v", spec)
 	resp, err := d.client().Server.Create(spec)
@@ -458,6 +448,20 @@ func (d *Driver) GetState() (state.State, error) {
 
 // PreCreateCheck allows for pre-create operations to make sure a driver is ready for creation
 func (d *Driver) PreCreateCheck() error {
+
+	serverTypes := []string{"standard", "hyperscale"}
+	if !stringInSlice(d.ServerType, serverTypes) {
+		return fmt.Errorf("Invalid server type: %s.", d.ServerType)
+	}
+
+	if d.AntiAffinityPolicy == "" && d.ServerType == "hyperscale" {
+		return fmt.Errorf("Missing anti-affinity policy name for hyperscale server.")
+	}
+
+	if d.AntiAffinityPolicy != "" && d.ServerType != "hyperscale" {
+		return fmt.Errorf("Anti affinity policy specified but the server type isn't 'hyperscale'")
+	}
+
 	return nil
 }
 
@@ -571,6 +575,21 @@ func deepGroups(g group.Groups, m *map[string]string) {
 	}
 }
 
+func getAntiAffinityPolicyID(policyName string) (string, error) {
+	policies, err := apiClient.AA.GetAll()
+	if err != nil {
+		return "", err
+	}
+
+	for _, i := range policies.Items {
+		if i.Name == policyName {
+			log.Debugf("Found anti-affinity poliy %s with id %s", i.Name, i.ID)
+			return i.ID, nil
+		}
+	}
+	return "", nil
+}
+
 func generatePassword(strlen int) string {
 	/* FIXME: ensure password conforms
 	   A password must be at least 8 characters and contain at least 3 of the following:
@@ -587,4 +606,13 @@ func generatePassword(strlen int) string {
 		result[i] = chars[rand.Intn(len(chars))]
 	}
 	return string(result)
+}
+
+func stringInSlice(str string, list []string) bool {
+	for _, v := range list {
+		if v == str {
+			return true
+		}
+	}
+	return false
 }
