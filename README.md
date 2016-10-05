@@ -34,7 +34,15 @@ token=$(docker run swarm create)
 docker-machine create -d clc --clc-server-group "dockerswarm" --swarm --swarm-discovery --swarm-token token://$token master
 docker $(docker-machine config --swarm master) info
 ```
+To create a baremetal server:
 
+```bash
+export CLC_USERNAME='<username>'
+export CLC_PASSWORD='<password>'
+export CLC_ALIAS='<alias>'
+
+docker-machine create -d clc --clc-server-group "test" --clc-server-type bareMetal --clc-server-location "GB3" --clc-bm-sku-id "529e2592a3e640a7c2617b5e8bc8feaed94eac22"  TEST
+```
 
 ## Options
 
@@ -56,8 +64,10 @@ docker-machine create -d clc --help
  ``--clc-server-template`` or ``CLC_SERVER_TEMPLATE`` | OS image                                        | ubuntu-14-64-template | no       
  ``--clc-ssh-user`` or ``CLC_SSH_USER``               | ssh user (specific to OS image)                 | root                  | no       
  ``--clc-ssh-password`` or ``CLC_SSH_PASSWORD``       | ssh password                                    | <generated>           | no 
- ``--clc-server-type`` or ``CLC_SERVER_TYPE``         | Server type (standard,hyperscale)               | standard              | no
- ``--clc-aa-policy`` or ``CLC_AA_POLICY``             | Anti affinity policy name                       | none                  | no (unless server type = hyperscale)      
+ ``--clc-server-type`` or ``CLC_SERVER_TYPE``         | Server type (standard,hyperscale, bareMetal)    | standard              | no
+ ``--clc-aa-policy`` or ``CLC_AA_POLICY``             | Anti affinity policy name                       | none                  | no (unless server type = hyperscale)
+ ``--clc-bm-sku-id`` or ``CLC_BM_SKU_ID``             | ID of the baremetal SKU                         | none                  | no (unless server type = bareMetal)
+ ``--clc-bm-os-type`` or ``CLC_BM_OS_TYPE``           | Type of OS to install onto the baremetal server | ubuntu14_64Bit        | no (unless server type = bareMetal)           
 
 
 Each environment variable may be overloaded by its option equivalent at runtime.

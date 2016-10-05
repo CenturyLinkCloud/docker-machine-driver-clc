@@ -1,52 +1,52 @@
 {
 	"ImportPath": "github.com/CenturyLinkCloud/docker-machine-driver-clc",
 	"GoVersion": "go1.6",
-	"GodepVersion": "v60",
+	"GodepVersion": "v74",
 	"Deps": [
 		{
 			"ImportPath": "github.com/CenturyLinkCloud/clc-sdk",
-			"Comment": "0.0.2-23-g596e0b7",
-			"Rev": "596e0b7d754aed8db9a74e933f5f88abba3e9594"
+			"Comment": "0.0.2-32-gf62483c",
+			"Rev": "f62483cfb14defc08e6de8ae223fa75f9f95f264"
 		},
 		{
 			"ImportPath": "github.com/CenturyLinkCloud/clc-sdk/aa",
-			"Comment": "0.0.2-23-g596e0b7",
-			"Rev": "596e0b7d754aed8db9a74e933f5f88abba3e9594"
+			"Comment": "0.0.2-32-gf62483c",
+			"Rev": "f62483cfb14defc08e6de8ae223fa75f9f95f264"
 		},
 		{
 			"ImportPath": "github.com/CenturyLinkCloud/clc-sdk/alert",
-			"Comment": "0.0.2-23-g596e0b7",
-			"Rev": "596e0b7d754aed8db9a74e933f5f88abba3e9594"
+			"Comment": "0.0.2-32-gf62483c",
+			"Rev": "f62483cfb14defc08e6de8ae223fa75f9f95f264"
 		},
 		{
 			"ImportPath": "github.com/CenturyLinkCloud/clc-sdk/api",
-			"Comment": "0.0.2-23-g596e0b7",
-			"Rev": "596e0b7d754aed8db9a74e933f5f88abba3e9594"
+			"Comment": "0.0.2-32-gf62483c",
+			"Rev": "f62483cfb14defc08e6de8ae223fa75f9f95f264"
 		},
 		{
 			"ImportPath": "github.com/CenturyLinkCloud/clc-sdk/dc",
-			"Comment": "0.0.2-23-g596e0b7",
-			"Rev": "596e0b7d754aed8db9a74e933f5f88abba3e9594"
+			"Comment": "0.0.2-32-gf62483c",
+			"Rev": "f62483cfb14defc08e6de8ae223fa75f9f95f264"
 		},
 		{
 			"ImportPath": "github.com/CenturyLinkCloud/clc-sdk/group",
-			"Comment": "0.0.2-23-g596e0b7",
-			"Rev": "596e0b7d754aed8db9a74e933f5f88abba3e9594"
+			"Comment": "0.0.2-32-gf62483c",
+			"Rev": "f62483cfb14defc08e6de8ae223fa75f9f95f264"
 		},
 		{
 			"ImportPath": "github.com/CenturyLinkCloud/clc-sdk/lb",
-			"Comment": "0.0.2-23-g596e0b7",
-			"Rev": "596e0b7d754aed8db9a74e933f5f88abba3e9594"
+			"Comment": "0.0.2-32-gf62483c",
+			"Rev": "f62483cfb14defc08e6de8ae223fa75f9f95f264"
 		},
 		{
 			"ImportPath": "github.com/CenturyLinkCloud/clc-sdk/server",
-			"Comment": "0.0.2-23-g596e0b7",
-			"Rev": "596e0b7d754aed8db9a74e933f5f88abba3e9594"
+			"Comment": "0.0.2-32-gf62483c",
+			"Rev": "f62483cfb14defc08e6de8ae223fa75f9f95f264"
 		},
 		{
 			"ImportPath": "github.com/CenturyLinkCloud/clc-sdk/status",
-			"Comment": "0.0.2-23-g596e0b7",
-			"Rev": "596e0b7d754aed8db9a74e933f5f88abba3e9594"
+			"Comment": "0.0.2-32-gf62483c",
+			"Rev": "f62483cfb14defc08e6de8ae223fa75f9f95f264"
 		},
 		{
 			"ImportPath": "github.com/docker/docker/pkg/term",
