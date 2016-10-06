@@ -1,3 +1,4 @@
+// Package main implements a Docker Machine driver for CenturyLink Cloud.
 package main
 
 import (
@@ -23,7 +24,7 @@ func main() {
 	plugin.RegisterDriver(&Driver{})
 }
 
-// Driver for CLC
+// Driver represents the Docker Machine plugin
 type Driver struct {
 	*drivers.BaseDriver
 	Username              string // CLC account + credentials
@@ -45,7 +46,20 @@ type Driver struct {
 	Public                bool   // allocate public IP for docker ports
 	PublicIP              string // calculated public IP
 	AntiAffinityPolicy    string
+	*BareMetalDetail
 }
+
+// BareMetalDetail represents a specific baremetal hardware configuration and OS.
+type BareMetalDetail struct {
+	SkuID  string
+	OSType string
+}
+
+const (
+	serverTypeStandard           = "standard"
+	serverTypeStandardHyperscale = "hyperscale"
+	serverTypeStandardBaremetal  = "bareMetal"
+)
 
 const (
 	defaultSSHPort         = 22
@@ -56,11 +70,12 @@ const (
 	defaultTemplate        = "ubuntu-14-64-template"
 	defaultCPU             = 2
 	defaultMemoryGB        = 2
-	defaultServerType      = "standard"
+	defaultServerType      = serverTypeStandard
 	defaultGroupName       = "Default Group"
 	defaultNameTemplate    = "DOCK"
 	defaultDescription     = "docker-machine"
 	defaultSSHKeyPackage   = "77abb844-579d-478d-3955-c69ab4a7ba1a" // uuid of ssh pubkey pkg
+	defaultBareMetalOS     = "ubuntu14_64Bit"
 )
 
 // GetCreateFlags registers the flags this d adds to
@@ -138,7 +153,7 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 		mcnflag.StringFlag{
 			EnvVar: "CLC_SERVER_TYPE",
 			Name:   "clc-server-type",
-			Usage:  "server type (default:standard) allowed: standard, hyperscale",
+			Usage:  "server type (default:standard) allowed: standard, hyperscale, bareMetal",
 			Value:  defaultServerType,
 		},
 		mcnflag.StringFlag{
@@ -169,6 +184,17 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Name:   "clc-aa-policy",
 			Usage:  "anti affinity policy name",
 		},
+		mcnflag.StringFlag{
+			EnvVar: "CLC_BM_SKU_ID",
+			Name:   "clc-bm-sku-id",
+			Usage:  "id of the baremetal sku to create",
+		},
+		mcnflag.StringFlag{
+			EnvVar: "CLC_BM_OS_TYPE",
+			Name:   "clc-bm-os-type",
+			Usage:  "type of operating system to install on the baremetal server (default: ubuntu14_64Bit)",
+			Value:  defaultBareMetalOS,
+		},
 	}
 }
 
@@ -190,6 +216,9 @@ func NewDriver(hostName, storePath string) drivers.Driver {
 			SSHUser:     defaultSSHUser,
 			MachineName: hostName,
 			StorePath:   storePath,
+		},
+		BareMetalDetail: &BareMetalDetail{
+			OSType: defaultBareMetalOS,
 		},
 	}
 	return d
@@ -237,6 +266,10 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 
 	d.ServerType = flags.String("clc-server-type")
 	d.AntiAffinityPolicy = flags.String("clc-aa-policy")
+
+	d.BareMetalDetail = &BareMetalDetail{}
+	d.BareMetalDetail.SkuID = flags.String("clc-bm-sku-id")
+	d.BareMetalDetail.OSType = flags.String("clc-bm-os-type")
 
 	return nil
 }
@@ -327,6 +360,10 @@ func (d *Driver) Create() error {
 			return fmt.Errorf("Error querying anti-affinity policies: %v", err)
 		}
 		spec.AntiAffinityPolicyID = policyID
+	}
+	if d.ServerType == serverTypeStandardBaremetal {
+		spec.ConfigurationID = d.BareMetalDetail.SkuID
+		spec.OSType = d.BareMetalDetail.OSType
 	}
 
 	log.Debugf("Spawning server with: %v", spec)
@@ -449,17 +486,24 @@ func (d *Driver) GetState() (state.State, error) {
 // PreCreateCheck allows for pre-create operations to make sure a driver is ready for creation
 func (d *Driver) PreCreateCheck() error {
 
-	serverTypes := []string{"standard", "hyperscale"}
+	serverTypes := []string{serverTypeStandard, serverTypeStandardHyperscale, serverTypeStandardBaremetal}
 	if !stringInSlice(d.ServerType, serverTypes) {
 		return fmt.Errorf("Invalid server type: %s.", d.ServerType)
 	}
 
-	if d.AntiAffinityPolicy == "" && d.ServerType == "hyperscale" {
+	if d.AntiAffinityPolicy == "" && d.ServerType == serverTypeStandardHyperscale {
 		return fmt.Errorf("Missing anti-affinity policy name for hyperscale server.")
 	}
 
-	if d.AntiAffinityPolicy != "" && d.ServerType != "hyperscale" {
+	if d.AntiAffinityPolicy != "" && d.ServerType != serverTypeStandardHyperscale {
 		return fmt.Errorf("Anti affinity policy specified but the server type isn't 'hyperscale'")
+	}
+
+	if d.ServerType == serverTypeStandardBaremetal {
+		err := checkBaremetalDetails(d.BareMetalDetail, d.Location, d.client())
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -541,6 +585,61 @@ func (d *Driver) detectIP() (string, error) {
 		}
 	}
 	return ip, nil
+}
+
+func checkBaremetalDetails(bmDetail *BareMetalDetail, dc string, client *sdk.Client) error {
+	if bmDetail.SkuID == "" {
+		return fmt.Errorf("For baremetal servers a sku must be specified")
+	}
+	if bmDetail.OSType == "" {
+		return fmt.Errorf("For baremetal servers a OS type must be specified")
+	}
+
+	// Check the DC has baremetal capabilities
+	cap, err := client.DC.GetCapabilities(dc)
+	if err != nil {
+		return fmt.Errorf("Error getting data center capabilities. %s", err.Error())
+	}
+	if cap.SupportsBareMetalServers == false {
+		return fmt.Errorf("Baremetal servers are not supported.")
+	}
+
+	// Get the baremetal capabilities and check the details supplied
+	bmc, err := client.DC.GetBareMetalCapabilities(dc)
+	if err != nil {
+		return fmt.Errorf("Error getting baremetal capabilities. %s", err.Error())
+	}
+
+	// Check the sku id exists
+	skuFound := false
+	availability := ""
+	for _, sku := range bmc.SKUs {
+		if sku.ID == bmDetail.SkuID {
+			skuFound = true
+			availability = sku.Availability
+			break
+		}
+	}
+	if !skuFound {
+		return fmt.Errorf("Baremetal sku not found: %s\n", bmDetail.SkuID)
+	}
+	if availability == "none" {
+		return fmt.Errorf("There is no availability for sku: %s\n", bmDetail.SkuID)
+	}
+
+	// Check that the OS type is valid
+	osFound := false
+	for _, os := range bmc.OperatingSystems {
+		if os.Type == bmDetail.OSType {
+			osFound = true
+			break
+		}
+	}
+	if !osFound {
+		return fmt.Errorf("OS not available for baremetal: %s\n", bmDetail.OSType)
+	}
+
+	return nil
 }
 
 func waitStatus(client *sdk.Client, id string) error {
