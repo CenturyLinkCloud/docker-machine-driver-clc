@@ -699,7 +699,7 @@ func generatePassword(strlen int) string {
 	*/
 	// adapted from http://siongui.github.io/2015/04/13/go-generate-random-string/
 	rand.Seed(time.Now().UTC().UnixNano())
-	const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIFJKLMNOPQRSTUVWXYZ0123456789!@#$*&()_"
+	const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIFJKLMNOPQRSTUVWXYZ0123456789!@#$*()_"
 	result := make([]byte, strlen)
 	for i := 0; i < strlen; i++ {
 		result[i] = chars[rand.Intn(len(chars))]
